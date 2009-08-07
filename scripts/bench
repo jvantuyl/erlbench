@@ -1,0 +1,46 @@
+#!/usr/bin/env escript
+-mode(compile).
+
+setup(Configuration) ->
+  Script = escript:script_name(),
+  Path0 = filename:dirname(Script),
+  Path1 = filename:absname_join(Path0,"../ebin"),
+  code:add_patha(Path1),
+  ConfigFile = case Configuration of
+    default -> 
+      filename:absname_join(Path0,"../config/default.bench");
+    Filename when is_list(Filename) ->
+      Filename
+  end,
+  case file:consult(ConfigFile) of
+    {ok,Config} ->
+      {ok,Config};
+    {error, {_,_,_} = Error} ->
+      io:fwrite(["Error parsing config file ",ConfigFile,": ",file:format_error(Error),$\n]),
+      halt(1);
+    {error, Error} ->
+      io:format("Error ~p loading configuration~n",[Error]),
+      halt(1)
+  end.
+
+run_test({Mod,Args}) ->
+  apply(Mod,bench,Args).
+
+bench(Config) ->
+  lists:foreach(fun run_test/1,Config).
+
+usage() ->
+  io:format("usage: ~p [benchmark configuration file]~n",[escript:script_name()]),
+  ok.
+
+run(ConfigFile) ->
+  {ok,Configuration} = setup(ConfigFile),
+  bench(Configuration).
+
+main([]) ->
+  run(default);
+main([ Filename ]) when is_list(Filename) ->
+  run(Filename);
+main(_) ->
+  usage().
+

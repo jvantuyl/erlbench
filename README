@@ -1,0 +1,5 @@
+A Suite For Benchmarking Erlang Performance
+===========================================
+
+Try running 'make bench'.
+
