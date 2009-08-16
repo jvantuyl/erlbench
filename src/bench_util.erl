@@ -2,4 +2,4 @@
 -export([repeat/2]).
 
 repeat(0,_) -> done;
-repeat(N,F) -> F(), repeat(N-1,F).
+repeat(N,F) when is_integer(N) -> F(), repeat(N-1,F).

@@ -16,7 +16,8 @@ setup(Configuration) ->
     {ok,Config} ->
       {ok,Config};
     {error, {_,_,_} = Error} ->
-      io:fwrite(["Error parsing config file ",ConfigFile,": ",file:format_error(Error),$\n]),
+      io:fwrite(["Error parsing config file ",ConfigFile,":",
+        file:format_error(Error),$\n]),
       halt(1);
     {error, Error} ->
       io:format("Error ~p loading configuration~n",[Error]),
@@ -24,7 +25,16 @@ setup(Configuration) ->
   end.
 
 run_test({Mod,Args}) ->
-  apply(Mod,bench,Args).
+  WasTrapping = process_flag(trap_exit,true),
+  BenchProc = spawn_link(Mod,bench,Args),
+  Result = receive
+    {'EXIT',BenchProc,normal} ->
+      ok;
+    {'EXIT',BenchProc,Reason} ->
+      {error,Mod,Reason}
+  end,
+  true = process_flag(trap_exit,WasTrapping),
+  Result.
 
 bench(Config) ->
   lists:foreach(fun run_test/1,Config).
